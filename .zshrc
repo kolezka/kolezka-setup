@@ -28,11 +28,15 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # ── Starship ─────────────────────────────────────────
-eval "$(starship init zsh)"
+if command -v starship &>/dev/null; then
+    eval "$(starship init zsh)"
+fi
 
 # ── Zoxide ───────────────────────────────────────────
-eval "$(zoxide init zsh)"
-alias cd='z'
+if command -v zoxide &>/dev/null; then
+    eval "$(zoxide init zsh)"
+    alias cd='z'
+fi
 
 # ── History ──────────────────────────────────────────
 HISTFILE="$HOME/.zsh_history"
