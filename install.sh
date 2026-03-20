@@ -55,6 +55,20 @@ if [[ "$OS" == "Darwin" ]]; then
     fi
 fi
 
+# ── Nerd Font ────────────────────────────────────────
+if command -v brew &>/dev/null; then
+    if ! brew list --cask font-meslo-lg-nerd-font &>/dev/null; then
+        info "Installing MesloLGS Nerd Font..."
+        brew install --cask font-meslo-lg-nerd-font
+        ok "MesloLGS Nerd Font installed"
+        warn "Set your terminal font to 'MesloLGS Nerd Font' for icons to display"
+    else
+        ok "MesloLGS Nerd Font already installed"
+    fi
+else
+    warn "Install a Nerd Font manually: https://www.nerdfonts.com"
+fi
+
 # ── Starship ─────────────────────────────────────────
 if ! command -v starship &>/dev/null; then
     info "Installing Starship..."
@@ -80,42 +94,44 @@ fi
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 
 # ── Zsh plugins ──────────────────────────────────────
-declare -A PLUGINS=(
-    [zsh-autosuggestions]="https://github.com/zsh-users/zsh-autosuggestions"
-    [zsh-syntax-highlighting]="https://github.com/zsh-users/zsh-syntax-highlighting.git"
-    [zsh-completions]="https://github.com/zsh-users/zsh-completions"
-    [zsh-autocomplete]="https://github.com/marlonrichert/zsh-autocomplete.git"
-    [zsh-history-substring-search]="https://github.com/zsh-users/zsh-history-substring-search.git"
-    [fzf-tab]="https://github.com/Aloxaf/fzf-tab.git"
-)
+PLUGINS="
+zsh-autosuggestions=https://github.com/zsh-users/zsh-autosuggestions
+zsh-syntax-highlighting=https://github.com/zsh-users/zsh-syntax-highlighting.git
+zsh-completions=https://github.com/zsh-users/zsh-completions
+zsh-autocomplete=https://github.com/marlonrichert/zsh-autocomplete.git
+zsh-history-substring-search=https://github.com/zsh-users/zsh-history-substring-search.git
+fzf-tab=https://github.com/Aloxaf/fzf-tab.git
+"
 
-for plugin in "${!PLUGINS[@]}"; do
+while IFS='=' read -r plugin url; do
+    [[ -z "$plugin" ]] && continue
     if [[ ! -d "$ZSH_CUSTOM/plugins/$plugin" ]]; then
         info "Installing plugin: $plugin"
-        git clone --depth 1 "${PLUGINS[$plugin]}" "$ZSH_CUSTOM/plugins/$plugin" >/dev/null 2>&1
+        git clone --depth 1 "$url" "$ZSH_CUSTOM/plugins/$plugin" >/dev/null 2>&1
         ok "$plugin installed"
     else
         ok "$plugin already installed"
     fi
-done
+done <<< "$PLUGINS"
 
 # ── Modern CLI tools ─────────────────────────────────
-# Map: command -> brew pkg : apt pkg : pacman pkg
-declare -A TOOL_MAP=(
-    [eza]="eza:eza:eza"
-    [bat]="bat:bat:bat"
-    [fd]="fd:fd-find:fd"
-    [rg]="ripgrep:ripgrep:ripgrep"
-    [fzf]="fzf:fzf:fzf"
-    [dust]="dust:du-dust:dust"
-    [btm]="bottom:bottom:bottom"
-    [zoxide]="zoxide:zoxide:zoxide"
-    [thefuck]="thefuck:thefuck:thefuck"
-)
+# Format: command=brew_pkg:apt_pkg:pacman_pkg
+TOOL_MAP="
+eza=eza:eza:eza
+bat=bat:bat:bat
+fd=fd:fd-find:fd
+rg=ripgrep:ripgrep:ripgrep
+fzf=fzf:fzf:fzf
+dust=dust:du-dust:dust
+btm=bottom:bottom:bottom
+zoxide=zoxide:zoxide:zoxide
+thefuck=thefuck:thefuck:thefuck
+"
 
-for cmd in "${!TOOL_MAP[@]}"; do
+while IFS='=' read -r cmd pkgs; do
+    [[ -z "$cmd" ]] && continue
     if ! command -v "$cmd" &>/dev/null; then
-        IFS=':' read -r brew_pkg apt_pkg pacman_pkg <<< "${TOOL_MAP[$cmd]}"
+        IFS=':' read -r brew_pkg apt_pkg pacman_pkg <<< "$pkgs"
         info "Installing $cmd..."
         if command -v brew &>/dev/null; then
             brew install "$brew_pkg" 2>/dev/null || true
@@ -133,7 +149,7 @@ for cmd in "${!TOOL_MAP[@]}"; do
     else
         ok "$cmd already installed"
     fi
-done
+done <<< "$TOOL_MAP"
 
 # ── Symlink dotfiles ─────────────────────────────────
 backup_and_link() {

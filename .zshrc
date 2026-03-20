@@ -1,3 +1,7 @@
+# Add deno completions to search path
+if [[ -d "$HOME/.zsh/completions" ]] && [[ ":$FPATH:" != *":$HOME/.zsh/completions:"* ]]; then 
+  export FPATH="$HOME/.zsh/completions:$FPATH"
+fi
 # ── Performance ──────────────────────────────────────
 DISABLE_AUTO_UPDATE="true"
 DISABLE_MAGIC_FUNCTIONS="true"
@@ -28,11 +32,10 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # ── Starship ─────────────────────────────────────────
-eval "$(starship init zsh)"
+if command -v starship &>/dev/null; then
+    eval "$(starship init zsh)"
+fi
 
-# ── Zoxide ───────────────────────────────────────────
-eval "$(zoxide init zsh)"
-alias cd='z'
 
 # ── History ──────────────────────────────────────────
 HISTFILE="$HOME/.zsh_history"
@@ -61,6 +64,8 @@ zstyle ':fzf-tab:complete:*:*' fzf-preview 'eza --icons --color=always $realpath
 zstyle ':autocomplete:*' min-delay 0.1
 zstyle ':autocomplete:*' min-input 1
 zstyle ':autocomplete:list-choices:*' max-lines 10
+zstyle ':autocomplete:*' widget-style menu-select
+zstyle ':autocomplete:*' fzf-completion no
 zmodload zsh/complist
 
 # ── Autosuggestions ──────────────────────────────────
@@ -71,15 +76,16 @@ ZSH_AUTOSUGGEST_USE_ASYNC=1
 bindkey '^ ' autosuggest-accept
 
 # ── Keybindings ──────────────────────────────────────
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey '^[OA' history-substring-search-up
-bindkey '^[OB' history-substring-search-down
+# Other navigation keys
 bindkey '^[[1;5C' forward-word       # Ctrl+Right
 bindkey '^[[1;5D' backward-word      # Ctrl+Left
 bindkey '^[[3~' delete-char          # Delete
 bindkey '^[[H' beginning-of-line     # Home
 bindkey '^[[F' end-of-line           # End
+
+# Use Ctrl+P/N for history search (doesn't conflict with arrow keys)
+bindkey '^P' history-substring-search-up
+bindkey '^N' history-substring-search-down
 
 # globalias: expand aliases on space
 globalias() {
@@ -158,6 +164,10 @@ export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# ── Local config (secrets, machine-specific) ─────────
+[ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
 # ── Aliases: general ─────────────────────────────────
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -199,6 +209,17 @@ alias nrb='npm run build'
 alias bi='bun install'
 alias br='bun run'
 alias brd='bun run dev'
+
+# ── claude-zai ────────────────────────
+
+claude-zai() {
+  ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic \
+  ANTHROPIC_AUTH_TOKEN="$ZAI_API_KEY" \
+  ANTHROPIC_DEFAULT_OPUS_MODEL=GLM-4.7 \
+  ANTHROPIC_DEFAULT_SONNET_MODEL=GLM-4.7-Flash \
+  ANTHROPIC_DEFAULT_HAIKU_MODEL=GLM-4.5-Air \
+  claude "$@"
+}
 
 # ── Aliases: modern CLI tools ────────────────────────
 if command -v eza &> /dev/null; then
@@ -253,6 +274,23 @@ extract() {
 
 mkcd() { mkdir -p "$1" && cd "$1" }
 
-# ── Local config (secrets, machine-specific) ─────────
-[ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
-[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+# Deno
+[ -f "$HOME/.deno/env" ] && . "$HOME/.deno/env"
+
+# bun completions
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# ── Zoxide (must be at the end) ─────────────────────
+if command -v zoxide &>/dev/null; then
+    eval "$(zoxide init zsh)"
+    alias cd='z'
+fi
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/me/.lmstudio/bin"
+# End of LM Studio CLI section
+
