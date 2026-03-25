@@ -1,3 +1,5 @@
+# Add deno completions to search path
+if [[ ":$FPATH:" != *":/Users/me/.zsh/completions:"* ]]; then export FPATH="/Users/me/.zsh/completions:$FPATH"; fi
 # ── Performance ──────────────────────────────────────
 DISABLE_AUTO_UPDATE="true"
 DISABLE_MAGIC_FUNCTIONS="true"
@@ -32,11 +34,6 @@ if command -v starship &>/dev/null; then
     eval "$(starship init zsh)"
 fi
 
-# ── Zoxide ───────────────────────────────────────────
-if command -v zoxide &>/dev/null; then
-    eval "$(zoxide init zsh)"
-    alias cd='z'
-fi
 
 # ── History ──────────────────────────────────────────
 HISTFILE="$HOME/.zsh_history"
@@ -260,3 +257,17 @@ mkcd() { mkdir -p "$1" && cd "$1" }
 # ── Local config (secrets, machine-specific) ─────────
 [ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
+. "/Users/me/.deno/env"
+
+# bun completions
+[ -s "/Users/me/.bun/_bun" ] && source "/Users/me/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# ── Zoxide (must be at the end) ─────────────────────
+if command -v zoxide &>/dev/null; then
+    eval "$(zoxide init zsh)"
+    alias cd='z'
+fi
