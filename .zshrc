@@ -62,6 +62,8 @@ zstyle ':fzf-tab:complete:*:*' fzf-preview 'eza --icons --color=always $realpath
 zstyle ':autocomplete:*' min-delay 0.1
 zstyle ':autocomplete:*' min-input 1
 zstyle ':autocomplete:list-choices:*' max-lines 10
+zstyle ':autocomplete:*' widget-style menu-select
+zstyle ':autocomplete:*' fzf-completion no
 zmodload zsh/complist
 
 # ── Autosuggestions ──────────────────────────────────
@@ -72,15 +74,16 @@ ZSH_AUTOSUGGEST_USE_ASYNC=1
 bindkey '^ ' autosuggest-accept
 
 # ── Keybindings ──────────────────────────────────────
-bindkey '^[[A' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey '^[OA' history-substring-search-up
-bindkey '^[OB' history-substring-search-down
+# Other navigation keys
 bindkey '^[[1;5C' forward-word       # Ctrl+Right
 bindkey '^[[1;5D' backward-word      # Ctrl+Left
 bindkey '^[[3~' delete-char          # Delete
 bindkey '^[[H' beginning-of-line     # Home
 bindkey '^[[F' end-of-line           # End
+
+# Use Ctrl+P/N for history search (doesn't conflict with arrow keys)
+bindkey '^P' history-substring-search-up
+bindkey '^N' history-substring-search-down
 
 # globalias: expand aliases on space
 globalias() {
