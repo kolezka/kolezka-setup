@@ -1,5 +1,7 @@
 # Add deno completions to search path
-if [[ ":$FPATH:" != *":/Users/me/.zsh/completions:"* ]]; then export FPATH="/Users/me/.zsh/completions:$FPATH"; fi
+if [[ -d "$HOME/.zsh/completions" ]] && [[ ":$FPATH:" != *":$HOME/.zsh/completions:"* ]]; then 
+  export FPATH="$HOME/.zsh/completions:$FPATH"
+fi
 # ── Performance ──────────────────────────────────────
 DISABLE_AUTO_UPDATE="true"
 DISABLE_MAGIC_FUNCTIONS="true"
@@ -260,10 +262,12 @@ mkcd() { mkdir -p "$1" && cd "$1" }
 # ── Local config (secrets, machine-specific) ─────────
 [ -f ~/.zsh_aliases ] && source ~/.zsh_aliases
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
-. "/Users/me/.deno/env"
+
+# Deno
+[ -f "$HOME/.deno/env" ] && . "$HOME/.deno/env"
 
 # bun completions
-[ -s "/Users/me/.bun/_bun" ] && source "/Users/me/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
