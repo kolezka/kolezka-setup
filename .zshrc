@@ -2,6 +2,7 @@
 if [[ -d "$HOME/.zsh/completions" ]] && [[ ":$FPATH:" != *":$HOME/.zsh/completions:"* ]]; then 
   export FPATH="$HOME/.zsh/completions:$FPATH"
 fi
+
 # ── Performance ──────────────────────────────────────
 DISABLE_AUTO_UPDATE="true"
 DISABLE_MAGIC_FUNCTIONS="true"
@@ -29,13 +30,12 @@ plugins=(
   zsh-syntax-highlighting
 )
 
-source $ZSH/oh-my-zsh.sh
+source "$ZSH/oh-my-zsh.sh"
 
 # ── Starship ─────────────────────────────────────────
 if command -v starship &>/dev/null; then
     eval "$(starship init zsh)"
 fi
-
 
 # ── History ──────────────────────────────────────────
 HISTFILE="$HOME/.zsh_history"
@@ -52,7 +52,6 @@ setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT
 zstyle ':completion:*' complete-options true
 zstyle ':completion:*' special-dirs true
 zstyle ':completion:*' menu select
-zstyle ':completion:*:*:*:*:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' rehash true
@@ -98,14 +97,9 @@ bindkey "^[[Z" magic-space
 bindkey -M isearch " " magic-space
 
 # ── Auto-ls on cd ────────────────────────────────────
-AUTO_LS_COMMANDS=(ls git-status)
-AUTO_LS_NEWLINE=false
-
 auto_ls() {
   if command -v eza &> /dev/null; then
     eza --icons --git
-  elif command -v exa &> /dev/null; then
-    exa --icons --git
   else
     ls -la
   fi
@@ -113,7 +107,8 @@ auto_ls() {
 chpwd_functions+=(auto_ls)
 
 # ── Platform ─────────────────────────────────────────
-case "$(uname -s)" in
+OS="$(uname -s)"
+case "$OS" in
   Darwin)
     export HOMEBREW_NO_ANALYTICS=1
     if [[ -d "/opt/homebrew" ]]; then
@@ -131,13 +126,21 @@ case "$(uname -s)" in
 esac
 
 # ── SSH agent ────────────────────────────────────────
-if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l >/dev/null 2>&1; then
-  eval "$(ssh-agent -s)" >/dev/null
+if [[ "$OS" == "Darwin" ]]; then
+  # macOS keychain manages ssh-agent automatically
+  ssh-add --apple-use-keychain 2>/dev/null
+else
+  # Linux: reuse a persistent socket to avoid orphaned agents
+  export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+  if [[ ! -S "$SSH_AUTH_SOCK" ]] || ! ssh-add -l >/dev/null 2>&1; then
+    rm -f "$SSH_AUTH_SOCK"
+    eval "$(ssh-agent -a "$SSH_AUTH_SOCK")" >/dev/null
+  fi
 fi
 
 for key in "$HOME/.ssh/"*; do
   [[ -f "$key" ]] || continue
-  [[ "$key" =~ \.(pub|config|known_hosts)$ ]] && continue
+  [[ "$key" =~ \.(pub|config|known_hosts|sock)$ ]] && continue
   [[ -f "$key.pub" ]] || continue
   alias "ssh-$(basename "$key")"="ssh-add '$key'"
 done
@@ -210,8 +213,7 @@ alias bi='bun install'
 alias br='bun run'
 alias brd='bun run dev'
 
-# ── claude-zai ────────────────────────
-
+# ── claude-zai ───────────────────────────────────────
 claude-zai() {
   ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic \
   ANTHROPIC_AUTH_TOKEN="$ZAI_API_KEY" \
@@ -229,68 +231,44 @@ if command -v eza &> /dev/null; then
   alias lt='eza --icons --tree --level=2'
   alias ./='eza --icons -la .'
   alias ../='eza --icons -la ..'
-elif command -v exa &> /dev/null; then
-  alias ls='exa --icons'
-  alias ll='exa -la --icons'
-  alias tree='exa --tree --icons'
-  alias ./='exa --icons -la .'
-  alias ../='exa --icons -la ..'
 fi
 
 if command -v bat &> /dev/null; then alias cat='bat --paging=never'; fi
-export BAT_THEME="Catppuccin Mocha"
+export BAT_THEME="tokyonight_night"
 
 if command -v fd &> /dev/null; then alias find='fd'; fi
 if command -v rg &> /dev/null; then alias grep='rg'; fi
 if command -v dust &> /dev/null; then alias du='dust'; fi
-if command -v bottom &> /dev/null; then alias top='btm'; fi
+if command -v btm &> /dev/null; then alias top='btm'; fi
 
-# ── thefuck ──────────────────────────────────────────
+# ── thefuck (lazy-loaded) ────────────────────────────
 if command -v thefuck &> /dev/null; then
-  eval $(thefuck --alias)
+  fuck() {
+    unset -f fuck
+    eval "$(thefuck --alias)"
+    fuck "$@"
+  }
   alias f='fuck'
 fi
 
-# ── NVM ──────────────────────────────────────────────
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
 # ── Functions ────────────────────────────────────────
-extract() {
-  if [ -f $1 ]; then
-    case $1 in
-      *.tar.bz2) tar xjf $1   ;; *.tar.gz) tar xzf $1    ;;
-      *.bz2)     bunzip2 $1   ;; *.rar)    unrar e $1     ;;
-      *.gz)      gunzip $1    ;; *.tar)    tar xf $1      ;;
-      *.tbz2)    tar xjf $1   ;; *.tgz)    tar xzf $1    ;;
-      *.zip)     unzip $1     ;; *.Z)      uncompress $1  ;;
-      *.7z)      7z x $1      ;; *)        echo "'$1' cannot be extracted via extract()" ;;
-    esac
-  else
-    echo "'$1' is not a valid file"
-  fi
-}
-
 mkcd() { mkdir -p "$1" && cd "$1" }
 
-# Deno
+# ── Deno ────────────────────────────────────────────
 [ -f "$HOME/.deno/env" ] && . "$HOME/.deno/env"
 
-# bun completions
+# ── Bun ─────────────────────────────────────────────
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-
-# bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# ── LM Studio CLI ──────────────────────────────────
+if [[ -d "$HOME/.lmstudio/bin" ]]; then
+  export PATH="$PATH:$HOME/.lmstudio/bin"
+fi
 
 # ── Zoxide (must be at the end) ─────────────────────
 if command -v zoxide &>/dev/null; then
     eval "$(zoxide init zsh)"
     alias cd='z'
 fi
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/me/.lmstudio/bin"
-# End of LM Studio CLI section
-

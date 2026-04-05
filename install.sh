@@ -115,23 +115,23 @@ while IFS='=' read -r plugin url; do
 done <<< "$PLUGINS"
 
 # ── Modern CLI tools ─────────────────────────────────
-# Format: command=brew_pkg:apt_pkg:pacman_pkg
+# Format: command=brew_pkg:apt_pkg:pacman_pkg:dnf_pkg
 TOOL_MAP="
-eza=eza:eza:eza
-bat=bat:bat:bat
-fd=fd:fd-find:fd
-rg=ripgrep:ripgrep:ripgrep
-fzf=fzf:fzf:fzf
-dust=dust:du-dust:dust
-btm=bottom:bottom:bottom
-zoxide=zoxide:zoxide:zoxide
-thefuck=thefuck:thefuck:thefuck
+eza=eza:eza:eza:eza
+bat=bat:bat:bat:bat
+fd=fd:fd-find:fd:fd-find
+rg=ripgrep:ripgrep:ripgrep:ripgrep
+fzf=fzf:fzf:fzf:fzf
+dust=dust:du-dust:dust:dust
+btm=bottom:bottom:bottom:bottom
+zoxide=zoxide:zoxide:zoxide:zoxide
+thefuck=thefuck:thefuck:thefuck:thefuck
 "
 
 while IFS='=' read -r cmd pkgs; do
     [[ -z "$cmd" ]] && continue
     if ! command -v "$cmd" &>/dev/null; then
-        IFS=':' read -r brew_pkg apt_pkg pacman_pkg <<< "$pkgs"
+        IFS=':' read -r brew_pkg apt_pkg pacman_pkg dnf_pkg <<< "$pkgs"
         info "Installing $cmd..."
         if command -v brew &>/dev/null; then
             brew install "$brew_pkg" 2>/dev/null || true
@@ -140,7 +140,7 @@ while IFS='=' read -r cmd pkgs; do
         elif command -v pacman &>/dev/null; then
             sudo pacman -S --noconfirm "$pacman_pkg" 2>/dev/null || true
         elif command -v dnf &>/dev/null; then
-            sudo dnf install -y "$brew_pkg" 2>/dev/null || true
+            sudo dnf install -y "$dnf_pkg" 2>/dev/null || true
         else
             warn "Cannot install $cmd — no supported package manager"
             continue
@@ -150,6 +150,19 @@ while IFS='=' read -r cmd pkgs; do
         ok "$cmd already installed"
     fi
 done <<< "$TOOL_MAP"
+
+# ── bat Tokyo Night theme ───────────────────────────
+BAT_THEMES_DIR="$(bat --config-dir 2>/dev/null)/themes"
+if [[ -n "$BAT_THEMES_DIR" ]] && [[ ! -f "$BAT_THEMES_DIR/tokyonight_night.tmTheme" ]]; then
+    info "Installing bat Tokyo Night theme..."
+    mkdir -p "$BAT_THEMES_DIR"
+    curl -sL "https://raw.githubusercontent.com/folke/tokyonight.nvim/main/extras/sublime/tokyonight_night.tmTheme" \
+        -o "$BAT_THEMES_DIR/tokyonight_night.tmTheme"
+    bat cache --build >/dev/null 2>&1
+    ok "bat Tokyo Night theme installed"
+else
+    ok "bat Tokyo Night theme already installed"
+fi
 
 # ── Symlink dotfiles ─────────────────────────────────
 backup_and_link() {

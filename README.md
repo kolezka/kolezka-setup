@@ -1,12 +1,12 @@
-# kolezka-setup
+# dotfiles
 
 🚀 Modern terminal setup with Zsh, Oh My Zsh, Starship (Tokyo Night theme), and blazing-fast CLI tools. Optimized for macOS and Linux.
 
 ## 🚀 Quick Start
 
 ```bash
-git clone git@github.com:kolezka/kolezka-setup.git
-cd kolezka-setup
+git clone git@github.com:kolezka/dotfiles.git
+cd dotfiles
 ./install.sh
 ```
 
@@ -19,6 +19,7 @@ Then open a new terminal to enjoy your enhanced shell! ✨
 | `.zshrc` | Optimized Zsh config with plugins, aliases, completions, and keybindings |
 | `starship.toml` | Tokyo Night single-line prompt (directory + git) |
 | `install.sh` | Cross-platform installer (macOS, Debian/Ubuntu, Arch, Fedora) |
+| `Makefile` | Shortcuts: `make install`, `make update`, `make lint` |
 
 ## What the installer does
 
