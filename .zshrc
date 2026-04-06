@@ -267,6 +267,8 @@ if [[ -d "$HOME/.lmstudio/bin" ]]; then
   export PATH="$PATH:$HOME/.lmstudio/bin"
 fi
 
+alias claude-mem='bun "$HOME/.claude/plugins/marketplaces/thedotmack/plugin/scripts/worker-service.cjs"'
+
 # ── Zoxide (must be at the end) ─────────────────────
 if command -v zoxide &>/dev/null; then
     eval "$(zoxide init zsh)"
